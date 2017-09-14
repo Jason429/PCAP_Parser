@@ -56,10 +56,27 @@ class Parser:
     @staticmethod
     def _process_tcp(self):
         self.L4 = 'TCP'
+        self.L4_TCP_Spt = struct.unpack_from(
+            'H', self.raw, offset=self.L4_start + 0)
+        self.L4_TCP_Dpt = struct.unpack_from(
+            'H', self.raw, offset=self.L4_start + 2)
+        self.L4_TCP_Seq = struct.unpack_from(
+            'I', self.raw, offset=self.L4_start + 4)
+        self.L4_TCP_Ack = struct.unpack_from(
+            'I', self.raw, offset=self.L4_start + 8)
+
+        self.L5_start = (struct.unpack_from(
+            'B', self.raw, offset=self.L4_start + 12)[0] / 16 * 4) + self.L4_start
 
     @staticmethod
     def _process_udp(self):
         self.L4 = 'UDP'
+
+    @staticmethod
+    def _data(self):
+        if not hasattr(self, 'L5_start'):
+            return
+        return self.raw[self.L5_start:]
 
 ########## PKT Class ##########
 
@@ -110,7 +127,7 @@ class PKT:
         self.IPprotocol = struct.unpack_from(
             'B', self.raw, offset=l3_off + 9)[0]
 
-        self.L4_start = l3_off + self.L3_header_size
+        self.L4_start = l3_off + (self.L3_header_size * 4)
 
     def process_l4(self):
         if not hasattr(self, 'IPprotocol'):
@@ -121,6 +138,9 @@ class PKT:
             Parser._process_icmp(self)
         if self.IPprotocol == 17:
             Parser._process_udp(self)
+
+    def data(self):
+        return Parser._data(self)
 
 ########## PKT Class Ends ##########
 
@@ -194,13 +214,21 @@ f.seek(0)
 total = []
 pcap_header_raw, PCAP_Header = fileHeader(f)
 
+print("File opened = f")
+print("pcap_header_raw = Raw header")
+print('')
+print("Options to query:  Creates Generators")
+print("ip_pkts(file_handle, end)")
+print("udp_pkts(file_handle, end)")
+print("tcp_pkts(file_handle, end)")
+print("icmp_pkts(file_handle, end)")
+print("--------------------------")
+print("Create ip_sets:")
+print("ip_sets(gen) -> (SRC, DST)")
+print("To write out pcaps: (will be appended with .pcap)")
+print("write_pcap(gen, filename='test'")
+print('')
 
-SRC = set()
-DST = set()
-
-for i in ip_pkts(f, end):
-    SRC.add(i.IPsrc)
-    DST.add(i.IPdst)
 
 # for pcap_file in file_list:
 #    with open(pcap_file, 'rb') as f:
