@@ -57,20 +57,29 @@ class Parser:
     def _process_tcp(self):
         self.L4 = 'TCP'
         self.L4_TCP_Spt = struct.unpack_from(
-            'H', self.raw, offset=self.L4_start + 0)
+            endian + 'H', self.raw, offset=self.L4_start + 0)[0]
         self.L4_TCP_Dpt = struct.unpack_from(
-            'H', self.raw, offset=self.L4_start + 2)
+            endian + 'H', self.raw, offset=self.L4_start + 2)[0]
         self.L4_TCP_Seq = struct.unpack_from(
-            'I', self.raw, offset=self.L4_start + 4)
+            endian + 'I', self.raw, offset=self.L4_start + 4)[0]
         self.L4_TCP_Ack = struct.unpack_from(
-            'I', self.raw, offset=self.L4_start + 8)
-
-        self.L5_start = (struct.unpack_from(
-            'B', self.raw, offset=self.L4_start + 12)[0] / 16 * 4) + self.L4_start
+            endian + 'I', self.raw, offset=self.L4_start + 8)[0]
+        self.L4_TCP_Length = struct.unpack_from(
+            'B', self.raw, offset=self.L4_start + 12)[0] / 16 * 4
+        self.L5_start = self.L4_start + self.L4_TCP_Length
 
     @staticmethod
     def _process_udp(self):
         self.L4 = 'UDP'
+        self.L4_UDP_Spt = struct.unpack_from(
+            endian + 'H', self.raw, offset=self.L4_start + 0)[0]
+        self.L4_UDP_Dpt = struct.unpack_from(
+            endian + 'H', self.raw, offset=self.L4_start + 2)[0]
+        self.L4_UDP_Length = struct.unpack_from(
+            endian + 'H', self.raw, offset=self.L4_start + 4)[0]
+        self.L4_UDP_Checksum = Parser.form(
+            struct.unpack_from('2B', self.raw, offset=self.L4_start + 6))
+        self.L5_start = self.L4_start + 8
 
     @staticmethod
     def _data(self):
@@ -213,6 +222,11 @@ f.seek(0)
 
 total = []
 pcap_header_raw, PCAP_Header = fileHeader(f)
+if struct.unpack('<I', pcap_header_raw[0:4])[0] < \
+   struct.unpack('>I', pcap_header_raw[0:4])[0]:
+    endian = '<'
+else:
+    endian = '>'
 
 print("File opened = f")
 print("pcap_header_raw = Raw header")
