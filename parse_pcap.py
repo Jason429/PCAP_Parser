@@ -168,15 +168,15 @@ def ip_pkts(file_handle, end):
 
 
 def udp_pkts(file_handle, end):
-    return (x for x in ip_pkts(f, end) if hasattr(x, 'L4') and x.L4 == 'UDP')
+    return (x for x in ip_pkts(file_handle, end) if hasattr(x, 'L4') and x.L4 == 'UDP')
 
 
 def tcp_pkts(file_handle, end):
-    return (x for x in ip_pkts(f, end) if hasattr(x, 'L4') and x.L4 == 'TCP')
+    return (x for x in ip_pkts(file_handle, end) if hasattr(x, 'L4') and x.L4 == 'TCP')
 
 
 def icmp_pkts(file_handle, end):
-    return (x for x in ip_pkts(f, end) if hasattr(x, 'L4') and x.L4 == 'ICMP')
+    return (x for x in ip_pkts(file_handle, end) if hasattr(x, 'L4') and x.L4 == 'ICMP')
 
 
 def ip_sets(gen):
